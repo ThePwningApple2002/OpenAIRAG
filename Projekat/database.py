@@ -1,4 +1,5 @@
 import redis
+import numpy as np
 
 def connect_to_redis(host='localhost', port=6379, db=0):
     try:
@@ -11,6 +12,26 @@ def connect_to_redis(host='localhost', port=6379, db=0):
         print(f"Could not connect to Redis: {e}")
         return None
 
+def create_redis_index(r, vector_dim, vector_type="FLAT"):
+    r.execute_command(
+        "FT.CREATE",
+        "embedding_index",
+        "ON", "HASH",
+        "PREFIX", "1", "embedding:",  # Prefix for keys
+        "SCHEMA",
+        "vector", "VECTOR", vector_type,  # Vector field
+        "6",  # Number of arguments for VECTOR
+        "TYPE", "FLOAT32",
+        "DIM", vector_dim,  # Dimension of embeddings
+        "DISTANCE_METRIC", "COSINE"  # Similarity metric
+    )
+
+def store_embeddings(r, embeddings, name):
+    for i, vector in enumerate(embeddings):
+        embedding_bytes = np.array(embeddings, dtype=np.float32).tobytes()
+        r.hset(f"{name}:{i}", mapping={"vector": embedding_bytes})
+# vector_dim = 384  # Replace with the size of your embedding vectors
+# create_redis_index(r, vector_dim)
 # CRUD Operations
 def create_value(r, key, value):
     """Create a new key-value pair in Redis."""
@@ -22,6 +43,19 @@ def create_value(r, key, value):
             print(f"Failed to set key '{key}'.")
     except Exception as e:
         print(f"Error creating value: {e}")
+
+
+# def create_value_loop(r, keys, values):
+#       """Create a new key-value pair in Redis."""
+#     try:
+#         result = r.set(key, value)
+#         if result:
+#             print(f"Key '{key}' set successfully.")
+#         else:
+#             print(f"Failed to set key '{key}'.")
+#     except Exception as e:
+#         print(f"Error creating value: {e}")
+
 
 def read_value(r, key):
     """Read the value of a given key."""
