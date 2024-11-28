@@ -29,7 +29,11 @@ def create_redis_index(r, vector_dim, vector_type="FLAT"):
 def store_embeddings(r, embeddings, name):
     for i, vector in enumerate(embeddings):
         embedding_bytes = np.array(embeddings, dtype=np.float32).tobytes()
-        r.hset(f"{name}:{i}", mapping={"vector": embedding_bytes})
+        r.hset(f"{name}:{i}", mapping={
+            "tag": name,
+            "vector": embedding_bytes})
+
+        
 # vector_dim = 384  # Replace with the size of your embedding vectors
 # create_redis_index(r, vector_dim)
 # CRUD Operations
